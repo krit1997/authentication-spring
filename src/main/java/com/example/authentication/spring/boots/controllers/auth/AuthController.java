@@ -17,6 +17,8 @@ import com.example.authentication.spring.boots.dtos.auth.PaginateRequest;
 import com.example.authentication.spring.boots.dtos.auth.RegisterRequest;
 import com.example.authentication.spring.boots.dtos.auth.UpdateUserRequest;
 import com.example.authentication.spring.boots.entities.User;
+import com.example.authentication.spring.boots.services.SendNotification.GmailSenderService;
+import com.example.authentication.spring.boots.services.auth.ForgetPasswordService;
 import com.example.authentication.spring.boots.services.auth.ListUsersService;
 import com.example.authentication.spring.boots.services.auth.LoginService;
 import com.example.authentication.spring.boots.services.auth.PaginateUsersService;
@@ -26,25 +28,35 @@ import com.example.authentication.spring.boots.services.auth.UserDetailService;
 import com.example.authentication.spring.boots.services.mapResponse.response.PaginatedResponse;
 import com.example.authentication.spring.boots.services.mapResponse.response.UserSimpleResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Authentication APIs")
 public class AuthController {
+
     private final RegisterService registerService;
     private final LoginService loginService;
     private final ListUsersService listUsersService;
     private final PaginateUsersService paginateUsersService;
     private final UserDetailService userDetailService;
     private final UpdateUserService updateUserService;
+    private final ForgetPasswordService forgetPasswordService;
+    private final GmailSenderService gmailSenderService;
 
     public AuthController(RegisterService registerService, LoginService loginService,
             ListUsersService listUsersService, PaginateUsersService paginateUsersService,
-            UserDetailService userDetailService, UpdateUserService updateUserService) {
+            UserDetailService userDetailService, UpdateUserService updateUserService,
+            ForgetPasswordService forgetPasswordService, GmailSenderService gmailSenderService) {
         this.registerService = registerService;
         this.loginService = loginService;
         this.listUsersService = listUsersService;
         this.paginateUsersService = paginateUsersService;
         this.userDetailService = userDetailService;
         this.updateUserService = updateUserService;
+        this.forgetPasswordService = forgetPasswordService;
+        this.gmailSenderService = gmailSenderService;
     }
 
     @PostMapping("/register")
@@ -82,7 +94,24 @@ public class AuthController {
 
     @PostMapping("/forget-password")
     public String forgetPassword(@RequestBody ForgetPasswordRequest request) {
-        return "entity";
+        return forgetPasswordService.execute(request);
+    }
+
+    @PostMapping("/reset-password")
+    public Boolean resetPassword(@RequestBody ForgetPasswordRequest request) {
+        return gmailSenderService.sendResetPasswordEmail(request.getEmail());
+    }
+
+    @Operation(summary = "test view response")
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello, world!";
+    }
+
+    @GetMapping("/spring-version")
+    public String springVersion() {
+        return org.springframework.web.method.ControllerAdviceBean.class
+                .getProtectionDomain().getCodeSource().getLocation().toString();
     }
 
 }
